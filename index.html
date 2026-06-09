@@ -110,6 +110,44 @@
         font-size: 14px;
       }
 
+      .language-switch {
+        display: inline-flex;
+        gap: 4px;
+        margin-top: 18px;
+        padding: 4px;
+        background: rgba(255, 253, 247, 0.74);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+      }
+
+      .language-button {
+        min-width: 92px;
+        min-height: 36px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .language-button:hover {
+        color: var(--ink);
+      }
+
+      .language-button[aria-pressed="true"] {
+        background: var(--accent);
+        color: #fffdf7;
+        box-shadow: 0 8px 18px rgba(32, 107, 95, 0.18);
+      }
+
+      .language-section[hidden] {
+        display: none;
+      }
+
       .language-label {
         display: inline-flex;
         align-items: center;
@@ -131,16 +169,20 @@
       }
     </style>
   </head>
-  <body>
+  <body data-lang="en">
     <main>
       <header>
         <div class="eyebrow">Attention Radar</div>
         <h1>Privacy Policy</h1>
         <p class="summary">This page explains what the Attention Radar Chrome extension reads, stores, and sends while showing confirmed public attention signals on technical platforms.</p>
         <p class="updated">Last updated: June 9, 2026</p>
+        <div class="language-switch" role="group" aria-label="Language selector">
+          <button type="button" class="language-button" data-lang-button="en" aria-pressed="true">English</button>
+          <button type="button" class="language-button" data-lang-button="zh" aria-pressed="false">中文</button>
+        </div>
       </header>
 
-      <section class="panel" aria-labelledby="english">
+      <section class="panel language-section" data-lang-section="en" aria-labelledby="english">
         <span class="language-label">English</span>
         <h2 id="english">Attention Radar Privacy Policy</h2>
         <p>Attention Radar is a Chrome extension that shows confirmed public attention signals on supported technical platforms, including GitHub, Hugging Face, Hacker News, X, Reddit, and Bluesky.</p>
@@ -181,7 +223,7 @@
         <p>For beta feedback, use the feedback channel provided to trusted testers or the feedback form linked from the extension listing.</p>
       </section>
 
-      <section class="panel" aria-labelledby="chinese">
+      <section class="panel language-section" data-lang-section="zh" aria-labelledby="chinese" hidden>
         <span class="language-label">中文</span>
         <h2 id="chinese">关注雷达隐私政策</h2>
         <p>关注雷达是一个 Chrome 插件，用来在 GitHub、Hugging Face、Hacker News、X、Reddit、Bluesky 等技术平台页面上显示已经确认的公开关注信号。</p>
@@ -226,5 +268,41 @@
         <p>Attention Radar / 关注雷达. This public page is provided for Chrome Web Store review and beta user transparency.</p>
       </footer>
     </main>
+    <script>
+      (() => {
+        const sections = [...document.querySelectorAll("[data-lang-section]")];
+        const buttons = [...document.querySelectorAll("[data-lang-button]")];
+        const supported = new Set(["en", "zh"]);
+
+        const getInitialLanguage = () => {
+          const params = new URLSearchParams(window.location.search);
+          const fromQuery = params.get("lang");
+          if (supported.has(fromQuery)) return fromQuery;
+          const fromStorage = window.localStorage.getItem("attentionRadarPrivacyLang");
+          if (supported.has(fromStorage)) return fromStorage;
+          return "en";
+        };
+
+        const setLanguage = (lang) => {
+          const next = supported.has(lang) ? lang : "en";
+          document.body.dataset.lang = next;
+          sections.forEach((section) => {
+            section.hidden = section.dataset.langSection !== next;
+          });
+          buttons.forEach((button) => {
+            const active = button.dataset.langButton === next;
+            button.setAttribute("aria-pressed", String(active));
+          });
+          window.localStorage.setItem("attentionRadarPrivacyLang", next);
+          document.documentElement.lang = next === "zh" ? "zh-CN" : "en";
+        };
+
+        buttons.forEach((button) => {
+          button.addEventListener("click", () => setLanguage(button.dataset.langButton));
+        });
+
+        setLanguage(getInitialLanguage());
+      })();
+    </script>
   </body>
 </html>
